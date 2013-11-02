@@ -1,0 +1,586 @@
+% Copyright (c) 2011-2013 Johan Eidenvall
+% (to Emacs, this is a -*- latex -*- file)
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{mj}[2013/11/01 v0.1 mj package for typesetting Mahjong]
+
+\RequirePackage{ifxetex}
+\RequireXeTeX
+
+\RequirePackage{kvoptions}% Needed for options processing
+
+% option to initially disable color
+\DeclareBoolOption{nocolor}
+
+\ProcessKeyvalOptions*
+
+% Do not require xcolor if loaded with nocolor option
+\ifmj@nocolor\else\RequirePackage{xcolor}\fi
+
+\providecommand\MJFontPath{}
+
+% horizontal tile mode selector
+\newif\if@mj@h
+
+% large font size selector
+\newif\if@mj@large
+
+% To check that one font is selected before \begin{document}
+\newif\if@mj@noinit\@mj@noinittrue
+\newif\if@mj@nofont\@mj@nofonttrue
+
+% Allow \begin{document} without selecting Mahjong font
+\newcommand\MJUseNone{\@mj@noinitfalse}
+
+% user macros to select fontsize
+\newcommand\MJLargeOn{\@mj@largetrue}
+\newcommand\MJLargeOff{\@mj@largefalse}
+
+% Macro to make the color comands
+\def\mj@mkcoloroption#1#2{%
+  \expandafter\newif\csname if@mj@#1color\endcsname% create if
+  \ifmj@nocolor\else\csname @mj@#1colortrue\endcsname\fi% set if to true if color enabled
+  \expandafter\def\csname mj@#1color:default\endcsname{#2}% save default color
+  \expandafter\def\csname mj@#1color\endcsname{#2}% set current color
+  \expandafter\def\csname MJ#1ColorOn\endcsname{% define On command
+    \csname @mj@#1colortrue\endcsname}%
+  \expandafter\def\csname MJ#1ColorOff\endcsname{% define Off command
+    \csname @mj@#1colorfalse\endcsname}%
+  \expandafter\def\csname MJ#1ColorSet\endcsname##1{% Set color command
+    \expandafter\def\csname mj@#1color\endcsname{##1}}%
+  \expandafter\def\csname MJ#1ColorDefault\endcsname{% Set default color command
+    \expandafter\def\csname mj@#1color\endcsname{\csname mj@#1color:default\endcsname}}%
+}
+
+\def\mj@setcolor#1{\csname if@mj@#1color\endcsname\color{\csname mj@#1color\endcsname}\fi}
+\def\mj@ifcolor#1{\csname if@mj@#1color\endcsname}
+
+\mj@mkcoloroption{Chun}{red!75!black}
+\mj@mkcoloroption{Haku}{black}
+\mj@mkcoloroption{Hatsu}{green!75!black}
+\mj@mkcoloroption{Back}{orange!75!black}
+\mj@mkcoloroption{Wind}{blue!50!black}
+\mj@mkcoloroption{RedFive}{red!75!black}
+
+\def\mj@letcmdtxt#1#2{\expandafter\let\expandafter#1\csname#2\endcsname}
+\def\mj@lettxttxt#1{\expandafter\mj@letcmdtxt\csname#1\endcsname}
+
+\def\mj@font@let#1{%
+  \def\mj@##1##2{\mj@lettxttxt{mj@##1}{mj@##1@##2}}%
+  \mj@{stack}{#1}%
+  \mj@{low}{#1}%
+  \mj@{h@one}{#1}%
+  \mj@{ton}{#1}%
+  \mj@{nan}{#1}%
+  \mj@{shaa}{#1}%
+  \mj@{pei}{#1}%
+  \mj@{chun}{#1}%
+  \mj@{haku}{#1}%
+  \mj@{hatsu}{#1}%
+  \mj@{back}{#1}%
+  \mj@{pin}{#1}%
+  \mj@{sou}{#1}%
+  \mj@{man}{#1}%
+}
+
+\def\mj@font@size{18pt}
+\def\mj@font@size@large{24pt}
+\def\mj@font@size@tenbou{36pt}
+
+\def\MJSetFontSizes#1#2{%
+  \def\mj@font@size{#1}%
+  \def\mj@font@size@large{#2}%
+}
+
+\def\MJSetFontSizeTenbou#1{%
+  \def\mj@font@size@tenbou{#1}%
+}
+
+\def\MJCurrentFont{None}
+
+% To use the font "Mahjong" (ma______.ttf) by YOSHIKI KITA
+% http://www.asahi-net.or.jp/~mn8y-kt/
+
+\def\mj@y@font@name{[\MJFontPath ma______.ttf]}
+\def\MJYoshikiFontName"#1"{%
+  \def\mj@y@font@name{#1}
+}
+
+\newif\if@mj@y@init
+\def\MJUseYoshiki{%
+  \if@mj@y@init\else
+    \font\mj@y@font="\mj@y@font@name" at \mj@font@size%
+    \font\mj@y@font@large="\mj@y@font@name" at \mj@font@size@large%
+  \fi
+  \let\mj@font\mj@y@font
+  \let\mj@font@large\mj@y@font@large
+  \mj@font@let{y}%
+  \def\MJCurrentFont{Mahjong (Yoshiki)}
+  \@mj@y@inittrue%
+  \@mj@nofontfalse%
+  \@mj@noinitfalse%
+}
+
+% defs used by Yoshiki mode
+\def\mj@stack@y#1#2{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex\makebox[0pt][l]{#1}\raisebox{.955ex}{#2}}}}
+\def\mj@low@y#1{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex{#1}}}}
+\def\mj@h@one@y#1{{\@mj@htrue\kern0.01ex{#1}}}
+\def\mj@ton@y{\mj@setcolor{Wind}{\if@mj@h\char"21\else\char"31\fi}}
+\def\mj@nan@y{\mj@setcolor{Wind}{\if@mj@h\char"22\else\char"32\fi}}
+\def\mj@shaa@y{\mj@setcolor{Wind}{\if@mj@h\char"23\else\char"33\fi}}
+\def\mj@pei@y{\mj@setcolor{Wind}{\if@mj@h\char"24\else\char"34\fi}}
+\def\mj@chun@y{{\mj@setcolor{Chun}\if@mj@h\char"27\else\char"37\fi}}
+\def\mj@haku@y{{\mj@setcolor{Haku}\if@mj@h\char"25\else\char"35\fi}}
+\def\mj@hatsu@y{{\mj@setcolor{Hatsu}\if@mj@h\char"26\else\char"36\fi}}
+\def\mj@back@y{{\mj@setcolor{Back}\if@mj@h\char"29\else\char"39\fi}}
+\def\mj@pin@y#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"41\or\char"53\or\char"44\or\char"46\or\char"47\or%
+        \char"48\or\char"4A\or\char"4B\or\char"4C\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"61\or\char"73\or\char"64\or\char"66\or\char"67\or%
+        \char"68\or\char"6A\or\char"6B\or\char"6C\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@sou@y#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"5A\or\char"58\or\char"43\or\char"56\or\char"42\or%
+        \char"4E\or\char"4D\or\char"3C\or\char"3E\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"7A\or\char"78\or\char"63\or\char"76\or\char"62\or%
+        \char"6E\or\char"6D\or\char"2C\or\char"2E\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@man@y#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"51\or\char"57\or\char"45\or\char"52\or\char"54\or%
+        \char"59\or\char"55\or\char"49\or\char"4F\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"71\or\char"77\or\char"65\or\char"72\or\char"74\or%
+        \char"79\or\char"75\or\char"69\or\char"6F\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+
+% - "MANGAN" (MANGANPL.TTF) by ???, available at http://www.garethjmsaunders.co.uk/mahjong/fonts.html
+
+\def\mj@man@font@name{[\MJFontPath MANGANPL.TTF]}
+\def\MJManganFontName"#1"{%
+  \def\mj@man@font@name{#1}
+}
+
+\newif\if@mj@man@init
+\def\mj@load@mangan{%
+  \if@mj@man@init\else%
+    \font\mj@man@font="\mj@man@font@name" at \mj@font@size%
+    \font\mj@man@font@large="\mj@man@font@name" at \mj@font@size@large%
+  \fi%
+  \@mj@man@inittrue%
+}
+
+\def\MJUseMangan{%
+  \mj@load@mangan%
+  \let\mj@font\mj@man@font%
+  \let\mj@font@large\mj@man@font@large%
+  \mj@font@let{man}%
+  \def\MJCurrentFont{Mangan}
+  \@mj@nofontfalse%
+  \@mj@noinitfalse%
+}
+
+% defs used by Mangan mode
+\def\mj@stack@man#1#2{{\@mj@htrue\makebox[0pt][l]{#1\kern1ex}\raisebox{1.1ex}{#2}}}
+\def\mj@low@man#1{{\@mj@htrue#1}}
+\def\mj@h@one@man#1{{\@mj@htrue#1}}
+%\def\mj@stack@man#1#2{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex\makebox[0pt][l]{#1}\raisebox{.955ex}{#2}}}}
+%\def\mj@low@man#1{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex{#1}}}}
+%\def\mj@h@one@man#1{{\@mj@htrue\kern0.01ex{#1}}}
+\def\mj@ton@man{\mj@setcolor{Wind}{\if@mj@h\char"21\else\char"31\fi}}
+\def\mj@nan@man{\mj@setcolor{Wind}{\if@mj@h\char"40\else\char"32\fi}}
+\def\mj@shaa@man{\mj@setcolor{Wind}{\if@mj@h\char"23\else\char"33\fi}}
+\def\mj@pei@man{\mj@setcolor{Wind}{\if@mj@h\char"24\else\char"34\fi}}
+\def\mj@chun@man{{\mj@setcolor{Chun}\if@mj@h\char"26\else\char"37\fi}}
+\def\mj@haku@man{{\mj@setcolor{Haku}\if@mj@h\char"25\else\char"35\fi}}
+\def\mj@hatsu@man{{\mj@setcolor{Hatsu}\if@mj@h\char"5E\else\char"36\fi}}
+\def\mj@back@man{{\mj@setcolor{Back}\if@mj@h\char"2A\else\char"38\fi}}
+\def\mj@pin@man#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"59\or\char"55\or\char"49\or\char"4F\or\char"50\or%
+        \char"7B\or\char"7D\or\char"41\or\char"53\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or% 79 75 69 6f 70 5b 5d 61  73
+        \char"79\or\char"75\or\char"69\or\char"6F\or\char"70\or%
+        \char"5B\or\char"5D\or\char"61\or\char"73\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@sou@man#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or% 44 46 47 48 4a   4b 4c 3a 22
+        \char"44\or\char"46\or\char"47\or\char"48\or\char"4A\or%
+        \char"4B\or\char"4C\or\char"3A\or\char"22\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%  64 66 67 68 6a   6b 6c 3b 27
+        \char"64\or\char"66\or\char"67\or\char"68\or\char"6A\or%
+        \char"6B\or\char"6C\or\char"3B\or\char"27\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@man@man#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or% 28 29 5f 2b 51   57 45 52 54
+        \char"28\or\char"29\or\char"5F\or\char"2B\or\char"51\or%
+        \char"57\or\char"45\or\char"52\or\char"54\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or% 39 30 2d 3d 71   77 65 72 74
+        \char"39\or\char"30\or\char"2D\or\char"3D\or\char"71\or%
+        \char"77\or\char"65\or\char"72\or\char"74\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+
+
+% - "Mahjong" (mahjong.ttf) by BRIDGEco, http://bridgeco.jp/
+
+\def\mj@bri@font@name{[\MJFontPath Mahjong Bridge.ttf]}
+\def\MJBridgeFontName"#1"{%
+  \def\mj@bri@font@name{#1}
+}
+
+\newif\if@mj@bri@init
+\def\mj@load@bridge{%
+  \if@mj@bri@init\else%
+    \font\mj@bri@font="\mj@bri@font@name" at \mj@font@size%
+    \font\mj@bri@font@large="\mj@bri@font@name" at \mj@font@size@large%
+  \fi%
+  \@mj@bri@inittrue%
+}
+
+\def\MJUseBridge{%
+  \mj@load@bridge%
+  \let\mj@font\mj@bri@font%
+  \let\mj@font@large\mj@bri@font@large%
+  \mj@font@let{bri}%
+  \def\MJCurrentFont{Majong (Bridge)}
+  \@mj@nofontfalse%
+  \@mj@noinitfalse%
+}
+
+% defs used by Bridge mode
+\def\mj@stack@bri#1#2{{\@mj@htrue\makebox[0pt][l]{#1\kern1ex}\raisebox{1.1ex}{#2}}}
+\def\mj@low@bri#1{{\@mj@htrue#1}}
+\def\mj@h@one@bri#1{{\@mj@htrue#1}}
+%\def\mj@stack@bri#1#2{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex\makebox[0pt][l]{#1}\raisebox{.955ex}{#2}}}}
+%\def\mj@low@bri#1{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex{#1}}}}
+%\def\mj@h@one@bri#1{{\@mj@htrue\kern0.01ex{#1}}}
+\def\mj@ton@bri{\mj@setcolor{Wind}{\if@mj@h\char"21\else\char"31\fi}}
+\def\mj@nan@bri{\mj@setcolor{Wind}{\if@mj@h\char"22\else\char"32\fi}}
+\def\mj@shaa@bri{\mj@setcolor{Wind}{\if@mj@h\char"23\else\char"33\fi}}
+\def\mj@pei@bri{\mj@setcolor{Wind}{\if@mj@h\char"24\else\char"34\fi}}
+\def\mj@chun@bri{{\mj@setcolor{Chun}\if@mj@h\char"27\else\char"37\fi}}
+\def\mj@haku@bri{{\mj@setcolor{Haku}\if@mj@h\char"25\else\char"35\fi}}
+\def\mj@hatsu@bri{{\mj@setcolor{Hatsu}\if@mj@h\char"26\else\char"36\fi}}
+\def\mj@back@bri{{\mj@setcolor{Back}\if@mj@h\char"25\else\char"35\fi}}
+\def\mj@pin@bri#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"51\or\char"57\or\char"45\or\char"52\or\char"54\or%
+        \char"59\or\char"55\or\char"49\or\char"4F\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"71\or\char"77\or\char"65\or\char"72\or\char"74\or%
+        \char"79\or\char"75\or\char"69\or\char"6F\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@sou@bri#1{% zxcvbnm,. b
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"5A\or\char"58\or\char"43\or\char"56\or\char"42\or%
+        \char"4E\or\char"4D\or\char"3C\or\char"3E{}\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"7A\or\char"78\or\char"63\or\char"76\or\char"62\or%
+        \char"6E\or\char"6D\or\char"2C\or\char"2E\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+\def\mj@man@bri#1{%
+  {%
+    \if@mj@h%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"41\or\char"53\or\char"44\or\char"46\or\char"47\or%
+        \char"48\or\char"4A\or\char"4B\or\char"4C\else\mj@invalidnum%
+      \fi%
+    \else%
+      \ifcase#1\relax\mj@invalidnum\or%
+        \char"61\or\char"73\or\char"64\or\char"66\or\char"67\or%
+        \char"68\or\char"6A\or\char"6B\or\char"6C\else\mj@invalidnum%
+      \fi%
+    \fi%
+  }%
+}
+
+% Fonts implementing the Unicode range for Mahjong.
+% - "Symbola" (Symbola613.ttf) by George Douros, http://users.teilar.gr/~g1951d/
+
+\def\mj@syma@font@name{[\MJFontPath Symbola613.ttf]}
+\def\MJSymbolaFontName"#1"{%
+  \def\mj@syma@font@name{#1}
+}
+
+\newif\if@mj@syma@init
+\def\MJUseSymbola{%
+  \if@mj@syma@init\else%
+    \font\mj@syma@font="\mj@syma@font@name" at \mj@font@size%
+    \font\mj@syma@font@large="\mj@syma@font@name" at \mj@font@size@large%
+  \fi%
+  \let\mj@font\mj@syma@font%
+  \let\mj@font@large\mj@syma@font@large%
+  \mj@font@let{syma}%
+  \def\MJCurrentFont{Symbola}
+  \@mj@syma@inittrue%
+  \@mj@nofontfalse%
+  \@mj@noinitfalse%
+}
+
+% defs used by Bridge mode
+\def\mj@stack@syma#1#2{{\@mj@htrue\makebox[0pt][l]{\raisebox{-0.48ex}{#1}}\raisebox{1.25ex}{#2}}}
+\def\mj@low@syma#1{{\@mj@htrue\raisebox{-0.5ex}{#1}}}
+\def\mj@h@one@syma#1{{\@mj@htrue#1}}
+%\def\mj@stack@syma#1#2{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex\makebox[0pt][l]{#1}\raisebox{.955ex}{#2}}}}
+%\def\mj@low@syma#1{{\@mj@htrue\raisebox{-0.14ex}{\kern0.01ex{#1}}}}
+%\def\mj@h@one@syma#1{{\@mj@htrue\kern0.01ex{#1}}}
+
+\def\mj@rotate@syma#1{\if@mj@h\rotatebox{90}{#1}\else{#1}\fi}
+
+\def\mj@ton@syma{{\mj@setcolor{Wind}\mj@rotate@syma{\mj@ton@uni}}}
+\def\mj@nan@syma{{\mj@setcolor{Wind}\mj@rotate@syma{\mj@nan@uni}}}
+\def\mj@shaa@syma{{\mj@setcolor{Wind}\mj@rotate@syma{\mj@shaa@uni}}}
+\def\mj@pei@syma{{\mj@setcolor{Wind}\mj@rotate@syma{\mj@pei@uni}}}
+\def\mj@chun@syma{{\mj@setcolor{Chun}\mj@rotate@syma{\mj@chun@uni}}}
+\def\mj@haku@syma{{\mj@setcolor{Haku}\mj@rotate@syma{\mj@haku@uni}}}
+\def\mj@hatsu@syma{{\mj@setcolor{Hatsu}\mj@rotate@syma{\mj@hatsu@uni}}}
+\def\mj@back@syma{{\mj@setcolor{Back}\mj@rotate@syma{\mj@back@uni}}}
+\def\mj@pin@syma#1{\mj@rotate@syma{\mj@pin@uni{#1}}}
+\def\mj@sou@syma#1{\mj@rotate@syma{\mj@sou@uni{#1}}}
+\def\mj@man@syma#1{\mj@rotate@syma{\mj@man@uni{#1}}}
+
+%0xD83C 0xDC00
+\def\mj@ton@uni{\char"D83C\char"DC00}
+\def\mj@nan@uni{\char"D83C\char"DC01}
+\def\mj@shaa@uni{\char"D83C\char"DC02}
+\def\mj@pei@uni{\char"D83C\char"DC03}
+\def\mj@chun@uni{\char"D83C\char"DC04}
+\def\mj@haku@uni{\char"D83C\char"DC06}
+\def\mj@hatsu@uni{\char"D83C\char"DC05}
+\def\mj@back@uni{\char"D83C\char"DC2B}
+\def\mj@pin@uni#1{%
+  {\char"D83C%
+    \ifcase#1\relax\mj@invalidnum\or%
+      \char"DC19\or\char"DC1A\or\char"DC1B\or\char"DC1C\or\char"DC1D\or%
+      \char"DC1E\or\char"DC1F\or\char"DC20\or\char"DC21\else\mj@invalidnum%
+    \fi%
+  }%
+}
+\def\mj@sou@uni#1{%
+  {\char"D83C%
+    \ifcase#1\relax\mj@invalidnum\or%
+      \char"DC10\or\char"DC11\or\char"DC12\or\char"DC13\or\char"DC14\or%
+      \char"DC15\or\char"DC16\or\char"DC17\or\char"DC18\else\mj@invalidnum%
+    \fi%
+  }%
+}
+\def\mj@man@uni#1{%
+  {\char"D83C%
+    \ifcase#1\relax\mj@invalidnum\or%
+      \char"DC07\or\char"DC08\or\char"DC09\or\char"DC0A\or\char"DC0B\or%
+      \char"DC0C\or\char"DC0D\or\char"DC0E\or\char"DC0F\else\mj@invalidnum%
+    \fi%
+  }%
+}
+
+%%%
+
+\def\mj@invalidnum{\errmessage{Tile number has to be 1--9!}}
+
+\def\mj@redfive#1{{\mj@setcolor{RedFive}#1{5}}}
+
+\def\mj@ponl#1{\mj@low{#1}#1#1}
+\def\mj@ponc#1{#1\mj@low{#1}#1}
+\def\mj@ponr#1{#1#1\mj@low{#1}}
+\def\mj@eponl#1{\mj@stack{#1}{#1}#1#1}
+\def\mj@eponc#1{#1\mj@stack{#1}{#1}#1}
+\def\mj@eponr#1{#1#1\mj@stack{#1}{#1}}
+\def\mj@kanl#1{\mj@low{#1}#1#1#1}
+\def\mj@kanc#1{#1\mj@low{#1}#1#1}
+\def\mj@kanr#1{#1#1#1\mj@low{#1}}
+\def\mj@ckan#1{\mj@back#1#1\mj@back}
+
+\newcommand\MJ[1]{\begingroup\mj@setup#1\endgroup}
+\newcommand\MJh[1]{\begingroup\mj@setup\@mj@htrue#1\endgroup}
+\def\mj@setup{%
+  \if@mj@nofont\PackageError{mj}{No Mahjong font selected!}{\@ehd}\fi%
+  % Numbered
+  \let\pin\mj@pin\let\circle\mj@pin\let\O\mj@pin%
+  \let\sou\mj@sou\let\bamboo\mj@sou\let\I\mj@sou%
+  \let\man\mj@man\let\character\mj@man\let\C\mj@man%
+  % Winds
+  \let\ton\mj@ton\let\east\mj@ton\let\E\mj@ton%
+  \let\nan\mj@nan\let\south\mj@nan\let\S\mj@nan%
+  \let\shaa\mj@shaa\let\west\mj@shaa\let\W\mj@shaa%
+  \let\pei\mj@pei\let\north\mj@pei\let\N\mj@pei%
+  % Dragons / Virtues
+  \let\chun\mj@chun\let\red\mj@chun\let\R\mj@chun%
+  \let\haku\mj@haku\let\white\mj@haku\let\Wh\mj@haku%
+  \let\hatsu\mj@hatsu\let\green\mj@hatsu\let\G\mj@hatsu%
+  % Other
+  \let\back\mj@back\let\B\mj@back%
+  % control commands
+  \let\stack\mj@stack\let\=\mj@stack%
+  \let\low\mj@low\let\_\mj@low%
+  \let\horizontal\mj@h@one\let\horiz\mj@h@one\let\-\mj@h@one%
+  \let\seth\@mj@htrue%
+  \let\setv\@mj@hfalse%
+  \let\akago\mj@redfive\let\redfive\mj@redfive\let\r\mj@redfive%
+  % set the font
+  \let\ponl\mj@ponl\let\ponc\mj@ponc\let\ponr\mj@ponr%
+  \let\eponl\mj@eponl\let\eponc\mj@eponc\let\eponr\mj@eponr%
+  \let\kanl\mj@kanl\let\kanc\mj@kanc\let\kanr\mj@kanr%
+  \let\ckan\mj@ckan%
+  %
+  \if@mj@large\mj@font@large\else\mj@font\fi%
+}
+
+\AtBeginDocument{\if@mj@noinit{\PackageError{mj}{Please initiate the mj package options!}{\@ehd}}\fi}
+
+\def\mj@tenbou@font@let#1{%
+  \def\mj@##1##2{\mj@lettxttxt{mj@tenbou@##1}{mj@tenbou@##1@##2}}%
+  \mj@{hyaku@H}{#1}%
+  \mj@{sen@H}{#1}%
+  \mj@{gosen@H}{#1}%
+  \mj@{ichiman@H}{#1}%
+  \mj@{hyaku@V}{#1}%
+  \mj@{sen@V}{#1}%
+  \mj@{gosen@V}{#1}%
+  \mj@{ichiman@V}{#1}%
+}
+
+\def\TenbouHyakuH{\mj@tenbou@hyaku@H}
+\def\TenbouSenH{\mj@tenbou@sen@H}
+\def\TenbouGoSenH{\mj@tenbou@gosen@H}
+\def\TenbouIchiManH{\mj@tenbou@ichiman@H}
+
+\def\TenbouHyakuV{\mj@tenbou@hyaku@V}
+\def\TenbouSenV{\mj@tenbou@sen@V}
+\def\TenbouGoSenV{\mj@tenbou@gosen@V}
+\def\TenbouIchiManV{\mj@tenbou@ichiman@V}
+
+\def\MJTenbouHorizontal{%
+  \let\TenbouHyaku\TenbouHyakuH
+  \let\TenbouSen\TenbouSenH
+  \let\TenbouGoSen\TenbouGoSenH
+  \let\TenbouIchiMan\TenbouIchiManH
+}
+\def\MJTenbouVertical{%
+  \let\TenbouHyaku\TenbouHyakuV
+  \let\TenbouSen\TenbouSenV
+  \let\TenbouGoSen\TenbouGoSenV
+  \let\TenbouIchiMan\TenbouIchiManV
+}
+
+\def\mj@tenbou@hyaku@H@mangan{{\mj@man@font@tenbou\char"4D}}
+\def\mj@tenbou@sen@H@mangan{{\mj@man@font@tenbou\char"3C}}
+\def\mj@tenbou@gosen@H@mangan{{\mj@man@font@tenbou\char"3E}}
+\def\mj@tenbou@ichiman@H@mangan{{\mj@man@font@tenbou\char"3F}}
+
+\def\mj@tenbou@hyaku@V@mangan{{\mj@man@font@tenbou\char"6D}}
+\def\mj@tenbou@sen@V@mangan{{\mj@man@font@tenbou\char"2C}}
+\def\mj@tenbou@gosen@V@mangan{{\mj@man@font@tenbou\char"2E}}
+\def\mj@tenbou@ichiman@V@mangan{{\mj@man@font@tenbou\char"2F}}
+
+\newif\if@mj@tenbou@man@init
+\def\mj@load@mangan@tenbou{%
+  \if@mj@tenbou@man@init\else%
+    \font\mj@man@font@tenbou="\mj@man@font@name" at \mj@font@size@tenbou%
+  \fi%
+  \@mj@tenbou@man@inittrue%
+}
+\def\MJUseManganTenbou{%
+  \mj@load@mangan@tenbou%
+  \mj@tenbou@font@let{mangan}%
+  \MJTenbouHorizontal%
+}
+
+
+%%% This does not really belong in this package...
+
+% Trim leading/trailing spaces inside a macro definition.
+%   (from Around the Bend(?))
+\catcode`\<=3 \catcode`\>=3
+\def\trimspace #1{\expandafter\expandafter\expandafter
+  \Trimspace@\expandafter <#1> >\\#1}
+\def\trimspaces #1{\expandafter\expandafter\expandafter
+  \Trimspaces@\expandafter <#1>< <\\#1}
+\def\Trimspaces@ #1< #2<#3\\{\Trimspace@ #1#3#2 >\\}
+\def\Trimspace@ #1 >#2\\{\TrimSpace@ #1>\\}
+\def\TrimSpace@ #1>#2\\#3{%
+  \expandafter\expandafter\expandafter\expandafter\expandafter
+  \def \expandafter\expandafter\expandafter #3\expandafter
+       {\Remove@#1}}
+\def\Remove@#1{}
+\catcode`\<12 \catcode`\>=12
+
+\def\ts#1{{\def\x{#1}\trimspaces\x\x}}
+
+
+\catcode`\>3
+\def\mj@mkcharfun#1#2{\def#1##1{{\let\mj@cr@inner#2\relax\expandafter\mj@cr##1>}}}
+%\def\myfun#1{{\def\mj@cr@inner##1{\MJ{\sou{##1}}}\mj@cr#1>}}
+\def\mj@cr@nodo#1>{}
+\def\mj@cr#1#2>{\mj@cr@inner{#1}\def\a{}\def\b{#2}\ifx\a\b\let\next\mj@cr@nodo\else\let\next\mj@cr\fi\expandafter\next\expandafter#2>}
+\catcode`\>12
+
+\def\mj@set@pin@#1{\MJ{\ifnum#1=0\relax\B\else\pin{#1}\fi}}
+\def\mj@set@sou@#1{\MJ{\ifnum#1=0\relax\B\else\sou{#1}\fi}}
+\def\mj@set@man@#1{\MJ{\ifnum#1=0\relax\B\else\man{#1}\fi}}
+\mj@mkcharfun\mj@set@pin\mj@set@pin@
+\mj@mkcharfun\mj@set@sou\mj@set@sou@
+\mj@mkcharfun\mj@set@man\mj@set@man@
+\def\MJSetNumPin#1{{\def\x{#1}\trimspaces\x\expandafter\mj@set@pin{\x}}}
+\def\MJSetNumSou#1{{\def\x{#1}\trimspaces\x\expandafter\mj@set@sou{\x}}}
+\def\MJSetNumMan#1{{\def\x{#1}\trimspaces\x\expandafter\mj@set@man{\x}}}
+
+\endinput

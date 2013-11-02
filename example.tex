@@ -1,0 +1,59 @@
+% Copyright (c) 2011-2013 Johan Eidenvall
+\documentclass[%
+  draft,%
+  a4paper,11pt,%
+]{article}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{xltxtra}
+\usepackage{xunicode}
+\usepackage{fontspec}
+
+\errorcontextlines=2
+
+\newcommand\MJFontPath{fonts/}
+\usepackage[
+%nocolor, % initially turn coloring of 
+]{mj}
+\MJSetFontSizes{14pt}{20pt}
+\MJUseMangan
+\MJUseManganTenbou
+\MJLargeOff
+
+\begin{document}
+
+{\MJLargeOn
+  \noindent
+  pin \MJ{\pin1\pin2\pin3\pin4\pin5\pin6\pin7\pin8\pin9}, Röd femma \MJ{\redfive\pin}.\par
+  \noindent
+  sou \MJ{\sou1\sou2\sou3\sou4\sou5\sou6\sou7\sou8\sou9}, Röd femma \MJ{\redfive\sou}.\par
+  \noindent
+  man \MJ{\man1\man2\man3\man4\man5\man6\man7\man8\man9}, Röd femma \MJ{\redfive\man}.\par
+  \noindent
+  ton \MJ\ton; nan \MJ\nan; shaa \MJ\shaa; pei \MJ\pei.\par
+  \noindent
+  chun \MJ\chun; haku \MJ\haku; hatsu \MJ\hatsu. (back \MJ\back)\par
+}
+
+% changing color:
+{
+  \MJChunColorOff
+  \noindent \verb|\MJChunColorOff|: \MJ{\hatsu\chun}\par
+  \MJChunColorOn
+  \noindent \verb|\MJChunColorOn|: \MJ{\hatsu\chun}\par
+  \MJChunColorSet{blue}
+  \noindent \verb|\MJChunColorSet{blue}|: \MJ{\hatsu\chun}\par
+  \MJChunColorDefault
+  \noindent \verb|\MJChunColorDefault|: \MJ{\hatsu\chun}\par
+  \noindent and similar for Haku, Hatsu, Back, Wind and RedFive.
+}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% TeX-engine: xetex
+%%% TeX-PDF-mode: t
+%%% TeX-auto-untabify: t
+%%% End:
