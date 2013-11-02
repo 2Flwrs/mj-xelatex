@@ -1,6 +1,8 @@
 A Mahjong Package for XeLaTeX
 =============================
 
+By: Johan Eidenvall <[johan@eidenvall.se](mailto:johan@eidenvall.se)>
+
 This project is a simple and idiosyncratic XeLaTeX package called `mj`
 for using Mahjong tile fonts.
 
@@ -23,9 +25,9 @@ fonts; and a tentative project roadmap.
 
 __Please contact me if you are interested in participating in this project!__
 
-Contact me via e-mail ([Johan Eidenvall](mailto:johan@eidenvall.se),
-mention in the subject that it is mahjong related) or via the project
-page (I’m not checking that regularly, so e-mailing is better...)
+Contact me via e-mail (see above, mention in the subject that it is
+mahjong related) or via the project page (I’m not checking that
+regularly, so e-mailing is better...)
 
 Usage
 =====
@@ -75,6 +77,7 @@ package. These are:
     or
     [Wikibooks](http://en.wikibooks.org/wiki/Unicode/Character_reference/1F000-1FFFF))
 
+---
 
 Boring legal stuff
 ==================
